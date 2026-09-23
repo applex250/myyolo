@@ -1,16 +1,16 @@
 """
 YOLOv8s 工具函数
-包含: NMS, 坐标缩放, 图像处理等
+包含: NMS, 坐标缩放, 图像处理等.
 """
 
-import torch
-import torchvision
 import cv2
 import numpy as np
+import torch
+import torchvision
 
 
 def box_iou(box1, box2):
-    """计算两组边界框的 IoU
+    """计算两组边界框的 IoU.
 
     参数:
         box1: (N, 4) 第一组边界框 (xyxy)
@@ -19,13 +19,12 @@ def box_iou(box1, box2):
     返回:
         (N, M) IoU 矩阵
     """
+
     def box_area(box):
         return (box[:, 2] - box[:, 0]) * (box[:, 3] - box[:, 1])
 
-
     area1 = box_area(box1)
     area2 = box_area(box2)
-
 
     # 计算交集
     lt = torch.max(box1[:, None, :2], box2[:, :2])
@@ -40,7 +39,7 @@ def box_iou(box1, box2):
 
 
 def non_max_suppression(prediction, conf_thres=0.25, iou_thres=0.45, max_det=300, nc=80):
-    """非极大值抑制 (NMS)
+    """非极大值抑制 (NMS).
 
     参数:
         prediction: (B, 4+nc, N) 模型输出 (已解码的边界框和类别分数)
@@ -60,7 +59,7 @@ def non_max_suppression(prediction, conf_thres=0.25, iou_thres=0.45, max_det=300
     for xi, x in enumerate(prediction):
         # x 形状: (4+nc, N) = (84, 8400)
         # 前 4 行是坐标，后 nc 行是类别分数
-        box = x[:4, :].t().contiguous()   # (N, 4) xywh
+        box = x[:4, :].t().contiguous()  # (N, 4) xywh
         scores = x[4:, :].t().contiguous()  # (N, nc)
 
         # xywh -> xyxy
@@ -101,7 +100,7 @@ def non_max_suppression(prediction, conf_thres=0.25, iou_thres=0.45, max_det=300
 
 
 def scale_boxes(img1_shape, boxes, img0_shape):
-    """将边界框坐标从 img1_shape 缩放到 img0_shape
+    """将边界框坐标从 img1_shape 缩放到 img0_shape.
 
     参数:
         img1_shape: 模型输入尺寸 (h, w)
@@ -129,7 +128,7 @@ def scale_boxes(img1_shape, boxes, img0_shape):
 
 
 def letterbox(img, new_shape=640, color=(114, 114, 114)):
-    """将图像缩放到指定尺寸，保持纵横比，不足部分填充
+    """将图像缩放到指定尺寸，保持纵横比，不足部分填充.
 
     参数:
         img: 输入图像 (numpy array)
@@ -151,7 +150,7 @@ def letterbox(img, new_shape=640, color=(114, 114, 114)):
     r = min(new_shape[0] / shape[0], new_shape[1] / shape[1])
 
     # 计算缩放后的尺寸
-    new_unpad = int(round(shape[1] * r)), int(round(shape[0] * r))
+    new_unpad = round(shape[1] * r), round(shape[0] * r)
 
     # 计算填充
     dw, dh = new_shape[1] - new_unpad[0], new_shape[0] - new_unpad[1]
@@ -163,15 +162,15 @@ def letterbox(img, new_shape=640, color=(114, 114, 114)):
         img = cv2.resize(img, new_unpad, interpolation=cv2.INTER_LINEAR)
 
     # 填充
-    top, bottom = int(round(dh - 0.1)), int(round(dh + 0.1))
-    left, right = int(round(dw - 0.1)), int(round(dw + 0.1))
+    top, bottom = round(dh - 0.1), round(dh + 0.1)
+    left, right = round(dw - 0.1), round(dw + 0.1)
     img = cv2.copyMakeBorder(img, top, bottom, left, right, cv2.BORDER_CONSTANT, value=color)
 
     return img, (r, r), (dw, dh)
 
 
 def preprocess_image(img, img_size=640):
-    """预处理图像用于推理
+    """预处理图像用于推理.
 
     参数:
         img: 输入图像 (numpy array, BGR)
@@ -184,7 +183,7 @@ def preprocess_image(img, img_size=640):
     original_shape = img.shape[:2]
 
     # Letterbox
-    img, ratio, pad = letterbox(img, new_shape=img_size)
+    img, _ratio, _pad = letterbox(img, new_shape=img_size)
 
     # 转换颜色空间 BGR -> RGB
     img = img[:, :, ::-1]
