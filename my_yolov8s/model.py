@@ -1,25 +1,21 @@
 """
 YOLOv8s 主模型类
-完全兼容官方 ultralytics 权重命名
+完全兼容官方 ultralytics 权重命名.
 
 State Dict 命名规则:
 - model.{layer_index}.{submodule}.{param}
 - 例如: model.0.conv.weight, model.2.cv1.conv.weight
 """
 
-import math
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
+from torch import nn
 
-from .modules import Conv, C2f, SPPF, Bottleneck, DFL, Concat, Upsample, make_divisible
 from .head import Detect
-from .config import YOLOV8S_SCALES, COCO_NAMES
+from .modules import SPPF, C2f, Concat, Conv, make_divisible
 
 
 class YOLOv8s(nn.Module):
-    """独立的 YOLOv8s 实现
-    能够直接加载官方预训练的 yolov8s.pt 权重文件
+    """独立的 YOLOv8s 实现 能够直接加载官方预训练的 yolov8s.pt 权重文件.
 
     架构:
         Backbone (layers 0-9):
@@ -51,16 +47,12 @@ class YOLOv8s(nn.Module):
     """
 
     def __init__(self, nc=80, weights_path=None, verbose=True):
-        """
-        参数:
-            nc: 类别数
-            weights_path: 预训练权重路径 (可选)
-            verbose: 是否打印加载信息
+        """参数: nc: 类别数 weights_path: 预训练权重路径 (可选) verbose: 是否打印加载信息.
         """
         super().__init__()
         self.nc = nc
         self.verbose = verbose
-        self.yaml = {'nc': nc}
+        self.yaml = {"nc": nc}
 
         # YOLOv8s 缩放参数
         depth_multiple = 0.33
@@ -69,11 +61,11 @@ class YOLOv8s(nn.Module):
 
         # 计算实际通道数和重复次数
         def make_round(n):
-            """计算实际重复次数"""
+            """计算实际重复次数."""
             return max(round(n * depth_multiple), 1) if n > 1 else n
 
         def make_channels(c):
-            """计算实际通道数"""
+            """计算实际通道数."""
             return min(make_divisible(c * width_multiple, 8), max_channels)
 
         # 构建模型
@@ -88,7 +80,7 @@ class YOLOv8s(nn.Module):
             self.load_weights(weights_path)
 
     def _build_model(self, nc, make_round, make_channels):
-        """构建 YOLOv8s 模型
+        """构建 YOLOv8s 模型.
 
         返回 nn.ModuleList 以确保 state_dict 命名为 model.{index}.xxx
         """
@@ -131,12 +123,12 @@ class YOLOv8s(nn.Module):
         # Layer 4: C2f outputs make_channels(256) = 128
         # Layer 6: C2f outputs make_channels(512) = 256
         # Layer 9: SPPF outputs make_channels(1024) = 512
-        ch4 = make_channels(256)   # 128
-        ch6 = make_channels(512)   # 256
+        ch4 = make_channels(256)  # 128
+        ch6 = make_channels(512)  # 256
         ch9 = make_channels(1024)  # 512
 
         # Layer 10: Upsample(2x) - input from layer 9 (512ch)
-        layers.append(nn.Upsample(None, 2, 'nearest'))
+        layers.append(nn.Upsample(None, 2, "nearest"))
 
         # Layer 11: Concat([10, 6]) - 512 + 256 = 768
         layers.append(Concat(1))
@@ -146,7 +138,7 @@ class YOLOv8s(nn.Module):
         layers.append(C2f(ch9 + ch6, ch12, make_round(3)))
 
         # Layer 13: Upsample(2x) - input from layer 12 (256ch)
-        layers.append(nn.Upsample(None, 2, 'nearest'))
+        layers.append(nn.Upsample(None, 2, "nearest"))
 
         # Layer 14: Concat([13, 4]) - 256 + 128 = 384
         layers.append(Concat(1))
@@ -183,17 +175,16 @@ class YOLOv8s(nn.Module):
         return nn.ModuleList(layers)
 
     def _initialize_weights(self):
-        """初始化模型权重"""
+        """初始化模型权重."""
         for m in self.model.modules():
             if isinstance(m, nn.Conv2d):
-                nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+                nn.init.kaiming_normal_(m.weight, mode="fan_out", nonlinearity="relu")
             elif isinstance(m, nn.BatchNorm2d):
                 nn.init.ones_(m.weight)
                 nn.init.zeros_(m.bias)
 
     def _initialize_strides(self):
-        """初始化检测头的 stride
-        通过一次前向传播计算各检测层的步长
+        """初始化检测头的 stride 通过一次前向传播计算各检测层的步长.
 
         注意: 必须在 eval 模式下运行，且禁用梯度计算
         以防止更新 BatchNorm 的 running statistics
@@ -247,7 +238,7 @@ class YOLOv8s(nn.Module):
             self.train()
 
     def forward(self, x):
-        """前向传播
+        """前向传播.
 
         参数:
             x: 输入图像张量 (B, 3, H, W)
@@ -280,7 +271,7 @@ class YOLOv8s(nn.Module):
         return x
 
     def load_weights(self, weights_path, strict=False):
-        """加载预训练权重
+        """加载预训练权重.
 
         参数:
             weights_path: 权重文件路径
@@ -293,18 +284,18 @@ class YOLOv8s(nn.Module):
             print(f"正在加载权重: {weights_path}")
 
         # 加载检查点 (weights_only=False 以支持包含自定义类的检查点)
-        ckpt = torch.load(weights_path, map_location='cpu', weights_only=False)
+        ckpt = torch.load(weights_path, map_location="cpu", weights_only=False)
 
         # 获取 state_dict
         # 注意: 必须先调用 .float() 将 float16 转换为 float32
         # 否则 state_dict() 返回的 float16 值会导致精度问题
-        if 'model' in ckpt:
-            if hasattr(ckpt['model'], 'float'):
-                state_dict = ckpt['model'].float().state_dict()
-            elif hasattr(ckpt['model'], 'state_dict'):
-                state_dict = ckpt['model'].state_dict()
+        if "model" in ckpt:
+            if hasattr(ckpt["model"], "float"):
+                state_dict = ckpt["model"].float().state_dict()
+            elif hasattr(ckpt["model"], "state_dict"):
+                state_dict = ckpt["model"].state_dict()
             else:
-                state_dict = ckpt['model']
+                state_dict = ckpt["model"]
         else:
             state_dict = ckpt
 
@@ -355,23 +346,23 @@ class YOLOv8s(nn.Module):
         return len(matched_dict)
 
     def save_weights(self, save_path):
-        """保存模型权重
+        """保存模型权重.
 
         参数:
             save_path: 保存路径
         """
-        torch.save({'model': self.state_dict()}, save_path)
+        torch.save({"model": self.state_dict()}, save_path)
         if self.verbose:
             print(f"权重已保存到: {save_path}")
 
     def info(self, detailed=False, verbose=True):
-        """打印模型信息"""
+        """打印模型信息."""
         n_p = sum(x.numel() for x in self.parameters())  # 参数数量
         n_g = sum(x.numel() for x in self.parameters() if x.requires_grad)  # 可训练参数
         n_l = len(self.model)  # 层数
 
         if verbose:
-            print(f"模型: YOLOv8s")
+            print("模型: YOLOv8s")
             print(f"  层数: {n_l}")
             print(f"  参数量: {n_p:,}")
             print(f"  可训练参数: {n_g:,}")
@@ -386,7 +377,7 @@ class YOLOv8s(nn.Module):
 
 
 def create_model(nc=80, weights_path=None, verbose=True):
-    """创建 YOLOv8s 模型的便捷函数
+    """创建 YOLOv8s 模型的便捷函数.
 
     参数:
         nc: 类别数
