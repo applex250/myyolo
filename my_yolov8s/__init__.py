@@ -1,5 +1,5 @@
 """
-独立 YOLOv8s 实现 - 可直接加载 yolov8s.pt 权重
+独立 YOLOv8s 实现 - 可直接加载 yolov8s.pt 权重.
 
 使用方法:
     from my_yolov8s import YOLOv8s, create_model
@@ -16,24 +16,24 @@
     output = model(x)
 """
 
-from .model import YOLOv8s, create_model
-from .modules import Conv, C2f, SPPF, Bottleneck, DFL, Concat, DWConv, Upsample
-from .head import Detect
 from .config import COCO_NAMES, YOLOV8S_SCALES
+from .head import Detect
+from .model import YOLOv8s, create_model
+from .modules import DFL, SPPF, Bottleneck, C2f, Concat, Conv, DWConv, Upsample
 
 __all__ = [
-    'YOLOv8s',
-    'create_model',
-    'Conv',
-    'C2f',
-    'SPPF',
-    'Bottleneck',
-    'DFL',
-    'Concat',
-    'DWConv',
-    'Upsample',
-    'Detect',
-    'COCO_NAMES',
-    'YOLOV8S_SCALES',
+    "COCO_NAMES",
+    "DFL",
+    "SPPF",
+    "YOLOV8S_SCALES",
+    "Bottleneck",
+    "C2f",
+    "Concat",
+    "Conv",
+    "DWConv",
+    "Detect",
+    "Upsample",
+    "YOLOv8s",
+    "create_model",
 ]
-__version__ = '1.0.0'
+__version__ = "1.0.0"
