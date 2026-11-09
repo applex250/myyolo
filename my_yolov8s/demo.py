@@ -1,23 +1,24 @@
 """
 YOLOv8s 使用示例
-演示如何加载预训练权重并进行推理
+演示如何加载预训练权重并进行推理.
 """
 
 import torch
+
 from my_yolov8s import YOLOv8s
 from my_yolov8s.config import COCO_NAMES
 from my_yolov8s.utils import non_max_suppression
 
 
 def demo_basic():
-    """基础使用示例"""
+    """基础使用示例."""
     print("=" * 60)
     print("YOLOv8s 基础使用示例")
     print("=" * 60)
 
     # 1. 创建模型并加载预训练权重
     print("\n1. 加载预训练模型...")
-    model = YOLOv8s(nc=80, weights_path='yolov8s.pt', verbose=True)
+    model = YOLOv8s(nc=80, weights_path="yolov8s.pt", verbose=True)
     model.eval()
 
     # 2. 打印模型信息
@@ -50,14 +51,14 @@ def demo_basic():
 
 
 def demo_training_mode():
-    """训练模式示例"""
+    """训练模式示例."""
     print("\n" + "=" * 60)
     print("YOLOv8s 训练模式示例")
     print("=" * 60)
 
     # 加载模型
     print("\n1. 加载模型...")
-    model = YOLOv8s(nc=80, weights_path='yolov8s.pt', verbose=False)
+    model = YOLOv8s(nc=80, weights_path="yolov8s.pt", verbose=False)
 
     # 切换到训练模式
     print("\n2. 切换到训练模式...")
@@ -76,7 +77,7 @@ def demo_training_mode():
 
 
 def demo_custom_classes():
-    """自定义类别数示例"""
+    """自定义类别数示例."""
     print("\n" + "=" * 60)
     print("YOLOv8s 自定义类别数示例")
     print("=" * 60)
@@ -96,27 +97,27 @@ def demo_custom_classes():
         y = output[0]
         # 10 类别: 输出应该是 (1, 4+10, 8400) = (1, 14, 8400)
         print(f"   输出形状: {y.shape}")
-        print(f"   预期形状: (1, 14, 8400)")
+        print("   预期形状: (1, 14, 8400)")
 
 
 def demo_save_load():
-    """保存和加载示例"""
+    """保存和加载示例."""
     print("\n" + "=" * 60)
     print("YOLOv8s 保存和加载示例")
     print("=" * 60)
 
     # 加载模型
     print("\n1. 加载预训练模型...")
-    model = YOLOv8s(nc=80, weights_path='yolov8s.pt', verbose=False)
+    model = YOLOv8s(nc=80, weights_path="yolov8s.pt", verbose=False)
 
     # 保存模型
     print("\n2. 保存模型...")
-    model.save_weights('my_yolov8s_saved.pt')
+    model.save_weights("my_yolov8s_saved.pt")
     print("   已保存到 my_yolov8s_saved.pt")
 
     # 重新加载
     print("\n3. 重新加载模型...")
-    model2 = YOLOv8s(nc=80, weights_path='my_yolov8s_saved.pt', verbose=True)
+    model2 = YOLOv8s(nc=80, weights_path="my_yolov8s_saved.pt", verbose=True)
 
     # 验证输出一致
     print("\n4. 验证输出一致性...")
@@ -136,11 +137,11 @@ def demo_save_load():
             print("   ⚠ 输出有差异")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import os
 
     # 检查 yolov8s.pt 是否存在
-    if not os.path.exists('yolov8s.pt'):
+    if not os.path.exists("yolov8s.pt"):
         print("警告: yolov8s.pt 不存在，部分示例无法运行")
         print("请将 yolov8s.pt 放在当前目录下\n")
 
